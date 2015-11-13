@@ -29,13 +29,14 @@ class PostEventTracker:
 		'''
 		returnDict = {}
 
+		# game variables
 		current_game = None
 		game_counter = -1
-		home_team = None
-		away_team = None
+		total_scores = None
 
+		# possession variables
 		current_possession_number = -1
-		total_score = 0
+		totaler = None
 		current_possession = []
 
 		with open(self.csvfile) as csvfile:
@@ -47,19 +48,31 @@ class PostEventTracker:
 
 					# evaluate the last possession from the previous game
 					if current_possession_number != -1:
-						total_score += self.pe(current_possession)
+						totaler['total'] += self.pe(current_possession)
+						totaler['possessions'] += 1
 
 					# add the game to the return dictionary
-					returnDict[current_game] = total_score / float(current_possession_number)
+					if current_game != None:
+						avg_scores = {'home':{}, 'away':{}}
+						avg_scores['home']['team'] = total_scores['home']['team']
+						avg_scores['away']['team'] = total_scores['away']['team']
+						avg_scores['home']['spp'] = total_scores['home']['total'] / float(total_scores['home']['possessions'])
+						avg_scores['away']['spp'] = total_scores['away']['total'] / float(total_scores['away']['possessions'])
+
+						returnDict[current_game] = avg_scores
 
 					# reset vars for new game
 					current_game = row['game_id']
 					game_counter += 1
+					total_scores = {
+							'home': {'team': None, 'total': 0, 'possessions': 0},
+							'away': {'team': None, 'total': 0, 'possessions': 0}
+						}
 					teams = HAL.lookup(current_game)
-					home_team = teams['home']
-					away_team = teams['away']
+					total_scores['home']['team'] = teams['home']
+					total_scores['away']['team'] = teams['away']
 					current_possession_number = -1
-					total_score = 0
+					totaler = None
 					current_possession = []
 
 				# ignore lines without a possession
@@ -70,9 +83,14 @@ class PostEventTracker:
 				if row['possession_number'] != current_possession_number:
 					# add score for the possession
 					if current_possession_number != -1:
-						total_score += self.pe(current_possession)
+						totaler['total'] += self.pe(current_possession)
+						totaler['possessions'] += 1
 
 					# reset possession variables
+					if total_scores['home']['team'] == row['possession_team']:
+						totaler = total_scores['home']
+					else:
+						totaler = total_scores['away']
 					current_possession_number = row['possession_number']
 					current_possession = []
 
