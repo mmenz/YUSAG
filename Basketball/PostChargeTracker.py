@@ -16,4 +16,4 @@ def points_evaluator(rows):
 	return total_points
 
 PCT = PET.PostEventTracker(csvfile, charge_function, points_evaluator, 6)
-print PCT.scorePerPossessionFullGame()
+PCT.plotDifferences()
