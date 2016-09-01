@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.node {
+  cursor: pointer;
+}
+
+.node:hover {
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+
+.node--leaf {
+  fill: white;
+}
+
+.label {
+  font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+  text-anchor: middle;
+  text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff, 0 -1px 0 #fff;
+}
+
+.label,
+.node--root,
+.node--leaf {
+  pointer-events: none;
+}
+
+<div style="float:left; margin:10px;">
+</style>
+<select onchange="changeYearFromSelector()" id="selector">
+<option> 2015 </option>
+<option> 2014 </option>
+<option> 2013 </option>
+<option> 2012 </option>
+<option> 2011 </option>
+</select>
+<center><p>NBA</p></center>
+</div>
+<svg width="700" height="700"><g transform="translate(1,1)"></svg>
+<script src="https://d3js.org/d3.v3.min.js"></script>
+<script>
+
+function changeYearFromSelector() {
+  var selector = document.getElementById("selector");
+  year = selector.value;
+  old = svg.selectAll("*");
+  changeYear(year);
+  old.remove();
+}
+
+var margin = 20,
+    diameter = 700;
+
+var color = d3.scale.linear()
+    .domain([-1, 5])
+    .range(["hsl(152,80%,80%)", "hsl(228,30%,40%)"])
+    .interpolate(d3.interpolateHcl);
+
+var year = 2015;
+
+var pack = d3.layout.pack()
+    .padding(1)
+    .size([diameter - margin, diameter - margin])
+    .value(function(d) { return d.size; })
+
+var svg = d3.select("svg")
+  .append("g")
+    .attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
+
+var header = d3.select("p");
+
+var nodes, root_save;
+
+function changeYear(year) {
+  d3.json("flare" + year + ".json", function(error, root) {
+    if (error) throw error;
+
+    var focus = root;
+    var view;
+    root_save = root;
+    nodes = pack.nodes(root);
+
+    console.log(root);
+
+    root.name = "";
+
+    var circle = svg.selectAll("circle")
+        .data(nodes)
+      .enter().append("circle")
+        .attr("class", function(d) { return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root"; })
+        .style("fill", function(d) { return d.children ? color(d.depth) : null; })
+        .on("click", function(d) { if (focus !== d) zoom(d), d3.event.stopPropagation(); });
+
+    var images = svg.selectAll("image")
+        .data(nodes)
+      .enter().append("svg:image")
+        .attr("xlink:href", function(d) {return d.image;})
+        .on("click", function(d) { if (focus !== d) zoom(d), d3.event.stopPropagation(); })
+        .on("mouseover", function(d) {
+          node.filter(function(e) { return e.team != d.team && !d.children && !e.children;})
+            .style("opacity", 0.5);
+          if (d.team)
+            header.text(d.team);
+          else
+            header.text("NBA")
+        })
+        .on("mouseout", function(d) {
+            node.style("opacity", 1.0);
+            header.text("NBA");
+        });
+
+    var text = svg.selectAll("text")
+        .data(nodes)
+      .enter().append("text")
+        .attr("class", "label")
+        .style("fill-opacity",
+          function(d) { return d.parent === root ? 1 : 0; })
+        .style("display", function(d) { return d.parent === root ? "inline" : "none"; })
+        .text(function(d) { return d.name; });
+
+
+    var node = svg.selectAll("circle,text,image")
+
+    d3.select("body")
+        .style("background", color(-1))
+        .on("click", function() { zoom(root); });
+
+    zoomTo([root.x, root.y, root.r * 2 + margin]);
+
+    function zoom(d) {
+      var focus0 = focus; focus = d;
+
+      var transition = d3.transition()
+          .duration(d3.event.altKey ? 7500 : 750)
+          .tween("zoom", function(d) {
+            var i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2 + margin]);
+            return function(t) { zoomTo(i(t)); };
+          });
+
+      transition.selectAll("text")
+          //.filter(function(d) { return d.parent === focus || this.style.display === "inline"; })
+          .style("font-size", function(d) { return focus.size > 0 ? "30px" : "11px"; })
+          .style("fill-opacity", function(d) { return (d.parent === focus || d === focus) ? 1 : 0; })
+          .each("start", function(d) { if (d.parent === focus || d === focus) this.style.display = "inline"; })
+          .each("end", function(d) { if (d.parent !== focus && d !== focus) this.style.display = "none"; });
+    }
+
+    function zoomTo(v) {
+      var k = diameter / v[2]; view = v;
+      node.attr("transform", function(d) { return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")"; });
+      circle.attr("r", function(d) { return d.r * k; });
+      text.attr("dy", function(d) { return -d.r * k; });
+      images.attr("width", function(d) { return 1.5 * d.r * k; });
+      images.attr("height", function(d) { return 1.5 * d.r * k; });
+      images.attr('x', function(d) {return -d.r * k/1.5 - 2;})
+      images.attr('y', function(d) {return -d.r * k/1.5 - 2;})
+
+    }
+
+  });
+}
+
+changeYearFromSelector();
+
+d3.select(self.frameElement).style("height", diameter + "px");
+
+</script>
