@@ -2,13 +2,26 @@
 <meta charset="utf-8">
 <style>
 
-.node {
-  cursor: pointer;
+div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 140px;
+    height: 30px;
+    padding: 2px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
 }
 
-.node:hover {
-  stroke: #000;
-  stroke-width: 1.5px;
+img {
+    width: 60%;
+
+}
+
+.node {
+  cursor: pointer;
 }
 
 .node--leaf {
@@ -19,6 +32,10 @@
   font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
   text-anchor: middle;
   text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff, 0 -1px 0 #fff;
+}
+
+.header {
+ font: 20px "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .label,
@@ -36,9 +53,48 @@
 <option> 2012 </option>
 <option> 2011 </option>
 </select>
-<center><p>NBA</p></center>
+<select onchange="changeSizeFromSelector()" id="sizeby">
+<option> BPM </option>
+<option> Min </option>
+<option> FGPCT </option>
+<option> TPPCT </option>
+<option> FTPCT </option>
+<option> FTAPERMIN </option>
+<option> OffPERMIN </option>
+<option> DefPERMIN </option>
+<option> TOPERMIN </option>
+<option> StlPERMIN </option>
+<option> BlkPERMIN </option>
+<option> BLKAPERMIN </option>
+<option> PFPERMIN </option>
+<option> PFDPERMIN </option>
+<option> PPGPERMIN </option>
+<option> USG_PCT </option>
+<option> PCT_FGA </option>
+<option> PCT_FG3A </option>
+<option> PCT_OREB </option>
+<option> PCT_DREB </option>
+<option> AST_TO </option>
+<option> AST_RATIO </option>
+<option> OREB_PCT </option>
+<option> DREB_PCT </option>
+<option> TM_TOV_PCT </option>
+<option> PACE </option>
+<option> PCT_FGA_3PT </option>
+<option> PCT_PTS_2PT </option>
+<option> PCT_PTS_2PT_MR </option>
+<option> PCT_PTS_3PT </option>
+<option> PCT_PTS_FB </option>
+<option> PCT_PTS_FT </option>
+<option> PCT_PTS_OFF_TOV </option>
+<option> PCT_PTS_PAINT </option>
+<option> PCT_AST_2PM </option>
+<option> PCT_AST_3PM </option>
+</select>
 </div>
+<center><p class="header">NBA</p>
 <svg width="700" height="700"><g transform="translate(1,1)"></svg>
+</center>
 <script src="https://d3js.org/d3.v3.min.js"></script>
 <script>
 
@@ -50,8 +106,19 @@ function changeYearFromSelector() {
   old.remove();
 }
 
+function changeSizeFromSelector() {
+  var selector = document.getElementById("sizeby");
+  sizer = selector.value;
+  nodes = pack.nodes(root_save);
+}
+
 var margin = 20,
     diameter = 700;
+
+// Define the div for the tooltip
+var div = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
 
 var color = d3.scale.linear()
     .domain([-1, 5])
@@ -59,30 +126,29 @@ var color = d3.scale.linear()
     .interpolate(d3.interpolateHcl);
 
 var year = 2015;
+var sizer = "BPM";
 
 var pack = d3.layout.pack()
     .padding(1)
     .size([diameter - margin, diameter - margin])
-    .value(function(d) { return d.size; })
+    .value(function(d) { return d.stats[sizer]; })
 
 var svg = d3.select("svg")
   .append("g")
     .attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
 
-var header = d3.select("p");
+var header = d3.select("center").select("p");
 
-var nodes, root_save;
+var nodes, node, root_save;
 
 function changeYear(year) {
-  d3.json("flare" + year + ".json", function(error, root) {
+  d3.json("https://raw.githubusercontent.com/mmenz/YUSAG/master/Basketball/ClusterVisual/flare" + year + ".json", function(error, root) {
     if (error) throw error;
 
     var focus = root;
     var view;
     root_save = root;
     nodes = pack.nodes(root);
-
-    console.log(root);
 
     root.name = "";
 
@@ -96,7 +162,7 @@ function changeYear(year) {
     var images = svg.selectAll("image")
         .data(nodes)
       .enter().append("svg:image")
-        .attr("xlink:href", function(d) {return d.image;})
+        .attr("xlink:href", function(d) {if (d.image) return "https://raw.githubusercontent.com/mmenz/YUSAG/master/Basketball/ClusterVisual/" +  d.image; return;})
         .on("click", function(d) { if (focus !== d) zoom(d), d3.event.stopPropagation(); })
         .on("mouseover", function(d) {
           node.filter(function(e) { return e.team != d.team && !d.children && !e.children;})
@@ -105,10 +171,24 @@ function changeYear(year) {
             header.text(d.team);
           else
             header.text("NBA")
+div.transition()
+                .duration(200)
+                .style("opacity", .9);
+          if (!d.children) {
+            var trueSizer = sizer;
+            if (sizer == "BPM") {
+              trueSizer = "trueBPM";
+            }
+            div.html(d.name + "<br\>" + sizer + " : " + Number(d.stats[trueSizer]).toFixed(2))
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY - 28) + "px");
+          }
         })
         .on("mouseout", function(d) {
             node.style("opacity", 1.0);
-            header.text("NBA");
+            header.text("NBA");div.transition()
+                .duration(500)
+                .style("opacity", 0);
         });
 
     var text = svg.selectAll("text")
@@ -121,10 +201,9 @@ function changeYear(year) {
         .text(function(d) { return d.name; });
 
 
-    var node = svg.selectAll("circle,text,image")
+    node = svg.selectAll("circle,text,image")
 
     d3.select("body")
-        .style("background", color(-1))
         .on("click", function() { zoom(root); });
 
     zoomTo([root.x, root.y, root.r * 2 + margin]);
@@ -167,3 +246,39 @@ changeYearFromSelector();
 d3.select(self.frameElement).style("height", diameter + "px");
 
 </script>
+
+<p> While there are five positions that everybody knows in basketball, players at those positions play the game very differently. LeBron James and Harrison Barnes are both nominally small forwards but they are not similar in their approach to that position. Currently, there is no good way of defining that difference succinctly. Therefore, we looked at mathematically defining player types in the NBA based mostly on how they play (focusing on tendencies such as Usage Rate, 3 Point Attempt Rate, and Percentage of Points Scored in the Paint) and to a lesser degree on how good they are (focusing on stats such as FG%, PTS per Minute, and Rebounds Per Minute). We then used hierarchical clustering to form the groups. We chose this method over k-means clustering because of the random nature of k-means clustering and we wanted stable results.  We now can say that LeBron James is really a shot creator, while Harrison Barnes is a shooter. The player types, attributes and representative players are summarized in the table below.  </p>
+
+<table><thead><tr class="header"><th align="left">Player Type</th>
+<th align="left">Traits Overrepresented</th><th align="left">Traits Underrepresented</th><th align="left">Sample Players </th>
+</tr></thead><tbody><tr class="odd"><td align="left">Traditional Bigs</td>
+<td align="left">Rebounding and Blocks</td><td align="left">3PT Attempts</td><td align="left">Tyson Chandler, Dwight Howard, and DeAndre Jordan</td>
+</tr><tr class="even"><td align="left">Shooters</td>
+<td align="left">3PT Attempts and 3PT%</td><td align="left">Points in the Paint </td><td align="left">Jared Dudley, Harrison Barnes, and Kyle Korver</td>
+</tr><tr class="odd"><td align="left">Shot Creators</td>
+<td align="left">Usage %,  FT Attempts</td><td align="left"> % of 3PT that are Assisted</td><td align="left">Stephen Curry, Lebron James, and Kemba Walker</td>
+</tr><tr class="even"><td align="left">Defensive Specialists</td>
+<td align="left">% shots that are assisted  and % of points that are on a fast break </td><td align="left">Usage %  and FG%</td><td align="left">Thabo Sefolosha, Luc Richard Mbah a Moute, Spencer Hawes</td>
+</tr><tr class="odd"><td align="left">Ball Dominant Guards </td>
+<td align="left">Assists, Unassisted Points, and Steals</td><td align="left">Rebounding </td><td align="left">Rajon Rondo, Chris Paul, and Ricky Rubio</td>
+</tr><tr class="even"><td align="left">Skilled Bigs </td>
+<td align="left">Rebounding, Usage %, and Mid Range Points</td><td align="left">3PT Attempts</td><td align="left">Karl-Anthony Towns, Blake Griffin, and Marc Gasol</td>
+</tr></tbody></table>
+
+<p> Once we have these clusters, we can look at other, related questions. Since we clustered every NBA player from the 2011-2012 season until the 2015-2016 Season, we can look at how players developed and changed over that time. During this period, Steph Curry has had an ascension from a great shooter and promising player to one of the best players in the NBA. Fittingly his player type has changed from being a Shooter to being a Shot Creator.  While he’s been a point guard throughout this transition, his player type has recognized how differently he now plays. Kawhi Leonard’s transition similarly explains how his playing style and role has changed. In the 2011 season, he was a Skilled Big.  The next two seasons he was a Shooter and the last two season he has been a Shot Creator. This mirrors his transition from defensive minder player, to a player who could also be a spot up shooter, to a player who could handle the ball and create offense.  In the opposite direction we can see the decline of the skills of Kevin Garnett. In 2011 and 2012, he was a skilled big, before transitioning toward being a traditional big the last three seasons. Again, this mirrors our qualitative understanding of how Kevin Garnett has changed. </p>
+
+<p> Another question we can ask with the help of the player types is whether certain player types compliment or subtract for the effectiveness of other types of players. Obviously a lineup’s effectiveness is also impacted by the skill level of the players involved in the lineup. A lineup with more skilled players is likely to be better. Thus we analyzed the success of lineups based on the skill level of the players and types of players that were involved. We used Plus Minus Per Minute Played as our success measure for lineups to avoid favoring lineups that had played more minutes. We also had threshold for the minimum minutes played for a lineup we would include to avoid having too much noise in the samples.  To measure lineup strength, we summed the BPM (Box Plus Minus) of the each of the players. We chose BPM because it a catch all statistic that attempts to quantify the ability of every player and is easily available from basketball-reference.com. We then tried to see if any player types or player type combinations were significant predictors of lineup success. Interestingly, we found that none were! In fact, a simple linear model of Lineup BPM to predict Plus Minus Per Minute was quite successful with a R^2 of .42.  </p>
+
+<p><center><img src="https://raw.githubusercontent.com/mmenz/YUSAG/master/Basketball/ClusterVisual/Picture1.png"/></center></p>
+
+<p> We observe that the residuals are normally distributed (The residual plot resembles a straight line) which indicated that a linear fit is appropriate in this case.  </p>
+
+<p><center><img src="https://raw.githubusercontent.com/mmenz/YUSAG/master/Basketball/ClusterVisual/Picture2.png"/></center></p>
+
+<p> Additionally, there is reason to believe that BPM (or any other single statistic for that matter) does not perfectly capture a players talent which adds more uncertainty in any attempt to predict lineup success. Furthermore, basketball, like all sports, has a component of inherent randomness that makes a perfect fit impossible to achieve. This makes the R^2 value of .42 surprisingly high and gives us confidence in the model.  </p>
+
+<p> There are a couple explanations for the fact that player type is not a significant predictor of lineup success. One possibility is that the impacts of the player types are already efficiently being accounted for by coaches and management. This makes a lot of sense since a hypothetical lineup that has all traditional big men (think DeAndre Jordan) would probably struggle mightily and would never be played in a real game. Additionally, in the interactive graphic above you can see that teams typically have players spaced out among the different player types. Thus, there is evidence to suggest that teams are already implicitly recognizing the value and existence of these player types, even if they haven’t formalized them as we have here. </p>
+
+<p> Another is that there is something our analysis is missing and that there are player types that would be significant predictors but we have missed them. However, because of how many lineups we looked at and the clustering methods we used, it is unlikely there are other more mathematically defined clusters that also serve as significant predictors after accounting for lineup skill. I also suspect that our linear model would have a worse fit and the residuals would not be as nicely normally distributed if this were the case. Instead the model just looks there is a large amount of natural fluctuation around the trend.   </p>
+
+<p> In summary, although we see strong mathematical evidence that there exist player types in the NBA that transcend the traditional positions and do a better job of describing who a player is and what they are likely to do, we find no evidence that these player types can help predict lineup success better than simply the talent of the lineup. We suspect that this is because coaches and general managers implicitly understand and account for these player types.  </p>
