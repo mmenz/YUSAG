@@ -1,0 +1,66 @@
+<!doctype html>
+<meta charset="utf-8">
+
+<!-- load D3js -->
+<script src="js/d3.js"></script>
+
+<!-- load D3plus after D3js -->
+<script src="js/d3plus.js"></script>
+
+<select id="selector" onclick="load(0)"></select>
+
+<!-- create container element for visualization -->
+<div id="viz"></div>
+
+<script>
+
+  var selector = d3.select("select");
+  var current_id = "0021300812";
+  var game_metadata;
+  var visualization;
+
+  d3.json("output/metadata.json", function(data){
+    for (var game_id in data) {
+      selector.append("option")
+        .text(game_id);
+    }
+    game_metadata = data;
+    if (visualization){
+      visualization.title(game_metadata[current_id]["filename"]);
+    }
+  });
+
+  function load(id){
+
+    document.getElementById("viz").innerHTML = "";
+
+    if (id == 0){
+      var sel = document.getElementById('selector');
+      id = sel.options[sel.selectedIndex].value;
+    }
+
+    current_id = id;
+
+    if (!game_metadata) {
+      game_metadata = {current_id: {"filename": "----"}}
+    }
+
+    d3.json("output/" + id + ".json", function(data){
+      // instantiate d3plus
+      visualization = d3plus.viz()
+        .container("#viz")  // container DIV to hold the visualization
+        .data(data)  // data to use with the visualization
+        .id("id")
+        .type("line")       // visualization type
+        .text("desc")       // key to use for display text
+        .y("value")         // key to use for y-axis
+        .x("time")          // key to use for x-axis
+        .x({"grid": false})
+        .title(game_metadata[current_id]["filename"])
+        .draw()             // finally, draw the visualization!
+    });
+  }
+
+  load(current_id);
+
+</script>
