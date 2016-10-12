@@ -9,10 +9,6 @@ import json
 from collections import OrderedDict
 import os
 
-# FEATURES = {
-#     "point_difference": compute_point_difference
-# }
-
 
 def get_filename(game_id, names_file):
     with open(names_file) as infile:
@@ -68,19 +64,22 @@ def make_result_lookup_table(train_file):
 def validate(team, play):
     if not team:
         return False
-    if play not in ['shot', 'rebound', 'turnover']:
+    if play not in ['shot', 'rebound', 'turnover', 'free throw']:
         return False
     return True
 
 
 def decide_possesion(home_team, row):
     play = row['event_type']
+    extended_play = row['type']
     team = row['team']
     # on shots or turnovers, possession goes to other team
-    if play == 'shot' or play == 'turnover':
+    last_free_throws = ['Free Throw Technical', 'Free Throw 2 of 2',
+                        'Free Throw 3 of 3', 'Free Throw 1 of 1']
+    if play in ['shot', 'turnover'] or extended_play in last_free_throws:
         return 0 if home_team == team else 1
     # on rebounds, possession goes to current team
-    elif play == 'rebound':
+    else:
         return 1 if home_team == team else 0
 
 
@@ -139,6 +138,7 @@ if __name__ == '__main__':
                                                     args.names_file)
 
     if args.console:
+        # CURRENTLY NOT WORKING
         with open(args.model_file) as serialized:
             model = pickle.loads(serialized.read())
         while 1:
@@ -182,13 +182,7 @@ if __name__ == '__main__':
         assert not features
     else:
         regressor = neural_network.MLPRegressor(hidden_layer_sizes=(10, 10,))
-        # regressor = ensemble.RandomForestRegressor(
-        #     n_estimators=10,
-        #     min_samples_split=50,
-        #     min_samples_leaf=5
-        # )
         regressor.fit(features, labels)
         print(regressor.score(features, labels))
-        # print(regressor.feature_importances_)
         with open(args.model_file, 'w') as serialized:
             serialized.write(pickle.dumps(regressor))
