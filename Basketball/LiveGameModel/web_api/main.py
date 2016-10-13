@@ -1,5 +1,4 @@
 from flask import Flask
-# import rpy2.robjects as robjects
 from sklearn import neural_network
 import pickle
 import subprocess
@@ -10,7 +9,7 @@ app = Flask(__name__)
 
 with open('no_possession_model.mdl') as serialized:
     model = pickle.loads(serialized.read())
-    
+
 
 def format_game(team1, team2, score1, score2, timerem, qtr):
     team1 = clean(team1)
