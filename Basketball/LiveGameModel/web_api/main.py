@@ -1,8 +1,11 @@
-from flask import Flask
+import sys
+print(sys.version_info)
 from sklearn import neural_network
 import pickle
 import subprocess
 import os
+from flask import Flask
+
 
 
 app = Flask(__name__)
