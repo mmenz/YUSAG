@@ -76,7 +76,7 @@ def list_games_today():
         game_desc = qs[desc_key][0]
         game_ids.append(game_id)
 
-        html += format_game(game_desc, game_id)
+        # html += format_game(game_desc, game_id)
 
     return json.dumps(game_ids)
 
