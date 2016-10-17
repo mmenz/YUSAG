@@ -55,9 +55,7 @@ def send_js(path):
 
 @app.route("/<string:game_id>")
 def display_game(game_id):
-    data = make_data_for_game_id(game_id)
-    html = open('plot.html').read()
-    return html.replace("INSERT_DATA_HERE", json.dumps(data))
+    return json.dumps(data)
 
 
 @app.route("/games")
@@ -65,6 +63,7 @@ def list_games_today():
     html = ''
     r = requests.get('http://www.espn.com/nba/bottomline/scores')
     qs = parse_qs(r.text)
+    game_ids = []
     for i in range(1, 17):
         url_key = 'nba_s_url%d' % (i)
         desc_key = 'nba_s_left%d' % (i)
@@ -74,10 +73,11 @@ def list_games_today():
 
         game_id = qs[url_key][0].split('gameId=')[1]
         game_desc = qs[desc_key][0]
+        game_ids.append(game_id)
 
         html += format_game(game_desc, game_id)
 
-    return html
+    return json.dumps(game_ids)
 
 
 if __name__ == "__main__":
