@@ -25,7 +25,7 @@ def parse_quarter_table(quarter, period, game_output):
         p = model.predict_proba([[diff, seconds, 0, total]])
         game_output.append({"time": 2880 - seconds - len(game_output) / 10000.,
                             "desc": quarter['PLAY'][key],
-                            "value": p[0],
+                            "value": p[0][1],
                             "id": "prediction"})
 
 
