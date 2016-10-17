@@ -22,13 +22,14 @@
 
         d3.select("#container")
           .append("div")
-            .attr("id", "viz" + game_id);
+            .attr("id", "viz" + game_id)
+            .attr("class", "plot");
 
         d3.json("https://nbamodel.herokuapp.com/" + game_id, function(data) {
           // instantiate d3plus
           visualization = d3plus.viz()
-            .container("#viz" + game_id)  // container DIV to hold the visualization
-            .data(data)  // data to use with the visualization
+            .container("#viz" + data["gameid"]) 
+            .data(data["data"])  // data to use with the visualization
             .id("id")
             .type("line")       // visualization type
             .text("desc")       // key to use for display text

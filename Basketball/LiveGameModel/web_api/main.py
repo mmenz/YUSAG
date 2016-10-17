@@ -56,7 +56,7 @@ def send_js(path):
 @app.route("/<string:game_id>")
 def display_game(game_id):
     data = make_data_for_game_id(game_id)
-    return json.dumps(data)
+    return json.dumps({"data": data, "gameid": game_id})
 
 
 @app.route("/games")
