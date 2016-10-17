@@ -7,3 +7,4 @@ pandas==0.17.1
 lxml==3.5.0
 html5lib==0.999999999
 beautifulsoup4==4.5.1
+Flask-Cors==3.0.2
