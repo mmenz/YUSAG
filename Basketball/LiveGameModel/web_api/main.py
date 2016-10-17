@@ -74,7 +74,7 @@ def list_games_today():
 
         game_id = qs[url_key][0].split('gameId=')[1]
         game_desc = qs[desc_key][0]
-        game_ids.append(game_id)
+        game_ids.append({"gameid": game_id, "desc": game_desc})
 
         # html += format_game(game_desc, game_id)
 

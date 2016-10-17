@@ -1,30 +1,33 @@
 <!doctype html>
 <meta charset="utf-8">
 
+<style>
+.plot {
+  width: 800px;
+  height: 400px;
+}
+</style>
+
 <script src="https://d3plus.org/js/d3.js"></script>
 <script src="https://d3plus.org/js/d3plus.js"></script>
 
 <!-- create container element for visualization -->
-<div id="viz0"></div>
-<div id="viz1"></div>
-<div id="viz2"></div>
-<div id="viz3"></div>
-<div id="viz4"></div>
-<div id="viz5"></div>
-<div id="viz6"></div>
-<div id="viz7"></div>
-<div id="viz8"></div>
-<div id="viz9"></div>
+<div id="container"></div>
 
 <script>
 
     d3.json("https://nbamodel.herokuapp.com/games", function(game_ids) {
       for (var i = 0; i < game_ids.length; i++) {
-        var game_id = game_ids[i];
+        var game_id = game_ids[i]["gameid"];
+
+        d3.select("#container")
+          .append("div")
+            .attr("id", "viz" + game_id);
+
         d3.json("https://nbamodel.herokuapp.com/" + game_id, function(data) {
           // instantiate d3plus
           visualization = d3plus.viz()
-            .container("#viz" + i)  // container DIV to hold the visualization
+            .container("#viz" + game_id)  // container DIV to hold the visualization
             .data(data)  // data to use with the visualization
             .id("id")
             .type("line")       // visualization type
@@ -32,6 +35,7 @@
             .y("value")         // key to use for y-axis
             .x("time")          // key to use for x-axis
             .x({"grid": false, "range": [0, 2880]})
+            .title(game_id[i]["desc"])
             .draw()             // finally, draw the visualization!
         })
       }
