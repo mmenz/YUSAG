@@ -16,9 +16,25 @@
 
 <script>
 
+  Number.prototype.toQMMSS = function () {
+      var sec_num = parseInt(this, 10); // don't forget the second param
+      var quarter   = Math.floor(sec_num / 720);
+      var minutes = Math.floor((sec_num - (quarter * 720)) / 60);
+      var seconds = sec_num - (quarter * 720) - (minutes * 60);
+
+      quarter = quarter + 1;
+      if (minutes < 10) {minutes = "0"+minutes;}
+      if (seconds < 10) {seconds = "0"+seconds;}
+      return 'Q'+quarter+' '+minutes+':'+seconds;
+  }
+
+    var descriptions = {};
+
     d3.json("https://nbamodel.herokuapp.com/games", function(game_ids) {
       for (var i = 0; i < game_ids.length; i++) {
         var game_id = game_ids[i]["gameid"];
+
+        descriptions[game_id] = game_ids[i]["desc"];
 
         d3.select("#container")
           .append("div")
@@ -28,7 +44,7 @@
         d3.json("https://nbamodel.herokuapp.com/" + game_id, function(data) {
           // instantiate d3plus
           visualization = d3plus.viz()
-            .container("#viz" + data["gameid"]) 
+            .container("#viz" + data["gameid"])
             .data(data["data"])  // data to use with the visualization
             .id("id")
             .type("line")       // visualization type
@@ -36,7 +52,15 @@
             .y("value")         // key to use for y-axis
             .x("time")          // key to use for x-axis
             .x({"grid": false, "range": [0, 2880]})
-            .title(game_id[i]["desc"])
+            .title(descriptions[data["gameid"]])
+            .format({
+              "number": function (number, params) {
+                if (params.key == 'time')
+                  return number.toQMMSS();
+                else
+                  return number;
+              }
+            })
             .draw()             // finally, draw the visualization!
         })
       }
