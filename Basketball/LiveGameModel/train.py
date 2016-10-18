@@ -110,8 +110,8 @@ def extract_features(train_file, lines_file, names_file):
                 + int(row['away_score'])
             line = lines_lookup_table[(date, home_team)]
             features.append([point_difference, time_remaining,
-                             possession, line, total_points_scored])
-            labels.append(result)
+                             line, total_points_scored])
+            labels.append(1 if result > 0 else 0)
             for_output_info = [time_remaining, row['description']]
             if game_id in for_output:
                 for_output[game_id].append(for_output_info)
@@ -181,8 +181,8 @@ if __name__ == '__main__':
         assert not predictions
         assert not features
     else:
-        regressor = neural_network.MLPRegressor(hidden_layer_sizes=(10, 10,))
-        regressor.fit(features, labels)
-        print(regressor.score(features, labels))
+        classifier = neural_network.MLPClassifier(hidden_layer_sizes=(10, 10,))
+        classifier.fit(features, labels)
+        print(classifier.score(features, labels))
         with open(args.model_file, 'w') as serialized:
-            serialized.write(pickle.dumps(regressor))
+            serialized.write(pickle.dumps(classifier))
