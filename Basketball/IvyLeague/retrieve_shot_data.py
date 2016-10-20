@@ -75,8 +75,14 @@ if __name__ == '__main__':
 
     # write data to csv
     filename = os.path.join(args.output_directory, str(args.gameid) + '.csv')
+    data = get_data(args.gameid)
+    if len(data) == 0:
+        print 'no shot chart available for ', args.gameid
+        exit()
+    else:
+        print 'retrieved shot data for ', args.gameid
+
     with open(filename, 'w') as outfile:
-        data = get_data(args.gameid)
         fieldnames = data[0].keys()
         writer = csv.DictWriter(outfile, fieldnames=fieldnames)
         writer.writeheader()
