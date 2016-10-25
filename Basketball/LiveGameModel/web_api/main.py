@@ -7,6 +7,7 @@ from urlparse import parse_qs
 import os
 import json
 import time
+from string import lower
 from flask import (
     Flask,
     send_from_directory,
@@ -22,7 +23,6 @@ app = Flask(__name__)
 CORS(app)
 
 games_today = None
-odds_today = None
 last_updated = 0
 PAUSE = 10000  # 10000 seconds ~ 3 hours
 
@@ -69,7 +69,12 @@ def send_js(path):
 
 @app.route("/<string:game_id>")
 def display_game(game_id):
-    data = make_data_for_game_id(game_id)
+    line = 0
+    for game in games_today:
+        if game['game_id'] == game_id:
+            line = game['line']
+            break
+    data = make_data_for_game_id(game_id, line)
     return json.dumps({"data": data, "gameid": game_id})
 
 
@@ -77,6 +82,9 @@ def parse_odds(odds_text):
     found = re.findall("<span class=\"odds\"> [\+\-]\d+\.?\d?"
                        " \([\-\+]?\d+\) </span>",
                        odds_text)
+    # if none found then line is even
+    if not found:
+        return 0
     # there should be two matches in found
     # the first one for the away team and the second for the home team
     # thus negate the line for the away team and average
@@ -86,6 +94,14 @@ def parse_odds(odds_text):
     home_match = re.findall("([\+\-]\d+\.?\d?) \(.*", home)[0]
     return (-float(away_match) + float(home_match)) / 2
 
+
+def link_matches_game_desc(game_desc, link):
+    team_words = link.split('nba/')[1].split('-odds')[0].split('-')
+    game_desc = lower(game_desc)
+    for team_word in team_words:
+        if team_word not in game_desc:
+            return False
+    return True
 
 
 @app.route("/games")
@@ -110,16 +126,21 @@ def list_games_today():
         # get odds
         links = re.findall("\"/nba/[a-z\-]+\-odds\-[a-z]+\-\d+\-\d+-\d+",
                            odds.text)
-        links = map(lambda x: 'http://www.oddsshark.com/' + x.strip('"'),
-                    list(set(links)))
 
-        text = [requests.get(link).text for link in links]
+        matching_links = []
+        for game in game_ids:
+            for link in links:
+                if link_matches_game_desc(game['desc'], link):
+                    link = 'http://www.oddsshark.com/' + link.strip('"')
+                    matching_links.append(link)
+                    break
+
+        text = [requests.get(link).text for link in matching_links]
         odds = map(parse_odds, text)
-        print(odds)
+        for game, line in zip(game_ids, odds):
+            game['line'] = line
 
-        odds_today = odds
         games_today = game_ids
-
         # html += format_game(game_desc, game_id)
 
     return json.dumps(games_today)

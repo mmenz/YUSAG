@@ -16,27 +16,27 @@ def compute_point_features(score):
     return home - away, home + away
 
 
-def parse_quarter_table(quarter, period, game_output):
+def parse_quarter_table(quarter, period, game_output, line):
     for key in quarter['SCORE']:
         score = quarter['SCORE'][key]
         time = quarter['time'][key]
         seconds = compute_seconds_remaining(period, time)
         diff, total = compute_point_features(score)
-        p = model.predict_proba([[diff, seconds, 0, total]])
+        p = model.predict_proba([[diff, seconds, line, total]])
         game_output.append({"time": 2880 - seconds - len(game_output) / 10000.,
                             "desc": quarter['PLAY'][key],
                             "value": p[0][1],
                             "id": "prediction"})
 
 
-def make_data_for_game_id(game_id):
+def make_data_for_game_id(game_id, line):
     url = "http://www.espn.com/nba/playbyplay?gameId=%s" % (game_id)
     game_output = []
     tables = read_html(url)
     # ignore first table
     quarters = tables[1:]
     for i, quarter in enumerate(quarters):
-        parse_quarter_table(quarter.to_dict(), i + 1, game_output)
+        parse_quarter_table(quarter.to_dict(), i + 1, game_output, line)
     return game_output
 
 

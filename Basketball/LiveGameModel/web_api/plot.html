@@ -50,6 +50,7 @@
             .type("line")       // visualization type
             .text("desc")       // key to use for display text
             .y("value")         // key to use for y-axis
+            .y({"range": [0, 1]})
             .x("time")          // key to use for x-axis
             .x({"grid": false, "range": [0, 2880]})
             .title(descriptions[data["gameid"]])
@@ -63,6 +64,12 @@
             })
             .draw()             // finally, draw the visualization!
         })
+      }
+
+      if (game_ids.length == 0) {
+        d3.select("#container")
+          .append("p")
+            .text("No Games Today!")
       }
     });
 
