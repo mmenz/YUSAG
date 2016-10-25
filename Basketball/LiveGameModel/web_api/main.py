@@ -140,7 +140,7 @@ def list_games_today():
         for game, line in zip(game_ids, odds):
             game['line'] = line
 
-        games_today = game_ids
+        global games_today = game_ids
         # html += format_game(game_desc, game_id)
 
     return json.dumps(games_today)
