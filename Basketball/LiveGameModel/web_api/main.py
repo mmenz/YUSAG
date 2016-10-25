@@ -6,6 +6,7 @@ import requests
 from urlparse import parse_qs
 import os
 import json
+import time
 from flask import (
     Flask,
     send_from_directory,
@@ -19,6 +20,11 @@ from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
 CORS(app)
+
+games_today = None
+odds_today = None
+last_updated = 0
+PAUSE = 10000  # 10000 seconds ~ 3 hours
 
 with open('no_possession_model.mdl') as serialized:
     model = pickle.loads(serialized.read())
@@ -67,26 +73,56 @@ def display_game(game_id):
     return json.dumps({"data": data, "gameid": game_id})
 
 
+def parse_odds(odds_text):
+    found = re.findall("<span class=\"odds\"> [\+\-]\d+\.?\d?"
+                       " \([\-\+]?\d+\) </span>",
+                       odds_text)
+    # there should be two matches in found
+    # the first one for the away team and the second for the home team
+    # thus negate the line for the away team and average
+    away = found[0]
+    home = found[1]
+    away_match = re.findall("([\+\-]\d+\.?\d?) \(.*", away)[0]
+    home_match = re.findall("([\+\-]\d+\.?\d?) \(.*", home)[0]
+    return (-float(away_match) + float(home_match)) / 2
+
+
+
 @app.route("/games")
 def list_games_today():
     html = ''
-    r = requests.get('http://www.espn.com/nba/bottomline/scores')
-    qs = parse_qs(r.text)
-    game_ids = []
-    for i in range(1, 17):
-        url_key = 'nba_s_url%d' % (i)
-        desc_key = 'nba_s_left%d' % (i)
+    if time.time() > last_updated + PAUSE:
+        r = requests.get('http://www.espn.com/nba/bottomline/scores')
+        odds = requests.get('http://www.oddsshark.com/nba/odds')
+        qs = parse_qs(r.text)
+        game_ids = []
+        for i in range(1, 17):
+            url_key = 'nba_s_url%d' % (i)
+            desc_key = 'nba_s_left%d' % (i)
 
-        if url_key not in qs:
-            break
+            if url_key not in qs:
+                break
 
-        game_id = qs[url_key][0].split('gameId=')[1]
-        game_desc = qs[desc_key][0]
-        game_ids.append({"gameid": game_id, "desc": game_desc})
+            game_id = qs[url_key][0].split('gameId=')[1]
+            game_desc = qs[desc_key][0]
+            game_ids.append({"gameid": game_id, "desc": game_desc})
+
+        # get odds
+        links = re.findall("\"/nba/[a-z\-]+\-odds\-[a-z]+\-\d+\-\d+-\d+",
+                           odds.text)
+        links = map(lambda x: 'http://www.oddsshark.com/' + x.strip('"'),
+                    list(set(links)))
+
+        text = [requests.get(link).text for link in links]
+        odds = map(parse_odds, text)
+        print(odds)
+
+        odds_today = odds
+        games_today = game_ids
 
         # html += format_game(game_desc, game_id)
 
-    return json.dumps(game_ids)
+    return json.dumps(games_today)
 
 
 if __name__ == "__main__":
