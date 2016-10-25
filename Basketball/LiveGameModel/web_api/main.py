@@ -71,7 +71,7 @@ def send_js(path):
 def display_game(game_id):
     line = 0
     for game in games_today:
-        if game['game_id'] == game_id:
+        if game['gameid'] == game_id:
             line = game['line']
             break
     data = make_data_for_game_id(game_id, line)
