@@ -106,6 +106,7 @@ def link_matches_game_desc(game_desc, link):
 
 @app.route("/games")
 def list_games_today():
+    global games_today
     html = ''
     if time.time() > last_updated + PAUSE:
         r = requests.get('http://www.espn.com/nba/bottomline/scores')
@@ -140,7 +141,7 @@ def list_games_today():
         for game, line in zip(game_ids, odds):
             game['line'] = line
 
-        global games_today = game_ids
+        games_today = game_ids
         # html += format_game(game_desc, game_id)
 
     return json.dumps(games_today)
