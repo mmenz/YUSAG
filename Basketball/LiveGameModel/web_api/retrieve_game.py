@@ -17,17 +17,20 @@ def compute_point_features(score):
 
 
 def parse_quarter_table(quarter, period, game_output, line):
+    data_points = []
     for key in quarter['SCORE']:
         score = quarter['SCORE'][key]
         time = quarter['time'][key]
         seconds = compute_seconds_remaining(period, time)
         # print(period, seconds, time, quarter['PLAY'][key])
         diff, total = compute_point_features(score)
-        p = model.predict_proba([[diff, seconds, line, total]])
+        data_points.append([diff, seconds, line, total])
         game_output.append({"time": 2880 - seconds - len(game_output) / 10000.,
                             "desc": score + ', ' + quarter['PLAY'][key],
-                            "value": p[0][1],
                             "id": "prediction"})
+    predictions = model.predict_proba(data_points)
+    for i, p in enumerate(predictions[0]):
+        game_output[-len(data_points) + i]["Win Percentage"] = p
 
 
 def make_data_for_game_id(game_id, line):
