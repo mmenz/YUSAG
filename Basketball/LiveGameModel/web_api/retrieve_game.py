@@ -21,6 +21,7 @@ def parse_quarter_table(quarter, period, game_output, line):
         score = quarter['SCORE'][key]
         time = quarter['time'][key]
         seconds = compute_seconds_remaining(period, time)
+        # print(period, seconds, time, quarter['PLAY'][key])
         diff, total = compute_point_features(score)
         p = model.predict_proba([[diff, seconds, line, total]])
         game_output.append({"time": 2880 - seconds - len(game_output) / 10000.,
@@ -34,7 +35,7 @@ def make_data_for_game_id(game_id, line):
     game_output = []
     tables = read_html(url)
     # ignore first table
-    quarters = tables[1:]
+    quarters = tables[1:][::-1]
     for i, quarter in enumerate(quarters):
         parse_quarter_table(quarter.to_dict(), i + 1, game_output, line)
     return game_output
