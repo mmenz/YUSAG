@@ -29,8 +29,8 @@ def parse_quarter_table(quarter, period, game_output, line):
                             "desc": score + ', ' + quarter['PLAY'][key],
                             "id": "prediction"})
     predictions = model.predict_proba(data_points)
-    for i, p in enumerate(predictions[0]):
-        game_output[-len(data_points) + i]["Win Percentage"] = p
+    for i, p in enumerate(predictions):
+        game_output[-len(data_points) + i]["Win Percentage"] = p[1]
 
 
 def make_data_for_game_id(game_id, line):
