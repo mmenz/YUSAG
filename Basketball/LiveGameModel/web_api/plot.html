@@ -43,13 +43,28 @@
 
         d3.json("https://nbamodel.herokuapp.com/" + game_id, function(data) {
           // instantiate d3plus
+          var game_data = data["data"];
+          var mirrored_data = [];
+          for (var i = 0; i < game_data.length; i++) {
+            mirrored_data.push(game_data[i]);
+            var copy = {};
+            for (var key in game_data[i]) {
+                copy[key] = game_data[i][key];
+            }
+            copy["id"] = "mirror";
+            copy["Win Percentage"] = 1 - copy["Win Percentage"];
+            mirrored_data.push(copy);
+          }
+
+          console.log(mirrored_data);
+
           visualization = d3plus.viz()
             .container("#viz" + data["gameid"])
-            .data(data["data"])  // data to use with the visualization
+            .data(mirrored_data)  // data to use with the visualization
             .id("id")
             .type("line")       // visualization type
             .text("desc")       // key to use for display text
-            .y("value")         // key to use for y-axis
+            .y("Win Percentage")         // key to use for y-axis
             .y({"range": [0, 1]})
             .x("time")          // key to use for x-axis
             .x({"grid": false, "range": [0, 2880]})
@@ -59,7 +74,7 @@
                 if (params.key == 'time')
                   return number.toQMMSS();
                 else
-                  return number;
+                  return number.toFixed(2);
               }
             })
             .draw()             // finally, draw the visualization!
