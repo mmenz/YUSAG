@@ -12,7 +12,7 @@ def compute_seconds_remaining(period, time):
 
 
 def compute_point_features(score):
-    home, away = map(int, score.split(' - '))
+    away, home = map(int, score.split(' - '))
     return home - away, home + away
 
 
