@@ -8,8 +8,8 @@
 }
 </style>
 
-<script src="https://d3plus.org/js/d3.js"></script>
-<script src="https://d3plus.org/js/d3plus.js"></script>
+<script src="https://d3plus.org/js/d3.min.js"></script>
+<script src="https://d3plus.org/js/d3plus.min.js"></script>
 
 <!-- create container element for visualization -->
 <div id="container"></div>
@@ -45,22 +45,22 @@
           // instantiate d3plus
           var game_data = data["data"];
           var mirrored_data = [];
-          for (var i = 0; i < game_data.length; i++) {
-            mirrored_data.push(game_data[i]);
-            var copy = {};
-            for (var key in game_data[i]) {
-                copy[key] = game_data[i][key];
-            }
-            copy["id"] = "mirror";
-            copy["Win Percentage"] = 1 - copy["Win Percentage"];
-            mirrored_data.push(copy);
-          }
-
-          console.log(mirrored_data);
+          // for (var i = 0; i < game_data.length; i++) {
+          //   mirrored_data.push(game_data[i]);
+          //   var copy = {};
+          //   for (var key in game_data[i]) {
+          //       copy[key] = game_data[i][key];
+          //   }
+          //   copy["id"] = "mirror";
+          //   copy["Win Percentage"] = 1 - copy["Win Percentage"];
+          //   mirrored_data.push(copy);
+          // }
+          //
+          // console.log(mirrored_data);
 
           visualization = d3plus.viz()
             .container("#viz" + data["gameid"])
-            .data(mirrored_data)  // data to use with the visualization
+            .data(game_data)  // data to use with the visualization
             .id("id")
             .type("line")       // visualization type
             .text("desc")       // key to use for display text
@@ -74,7 +74,7 @@
                 if (params.key == 'time')
                   return number.toQMMSS();
                 else
-                  return number.toFixed(2);
+                  return (100 * number).toFixed(1) + "%";
               }
             })
             .draw()             // finally, draw the visualization!

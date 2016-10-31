@@ -6,6 +6,7 @@ import json
 from collections import defaultdict, OrderedDict
 from sklearn.linear_model import LinearRegression
 import numpy as np
+import csv
 
 IVY = ['Harvard', 'Penn', 'Cornell', 'Yale', 'Brown',
        'Dartmouth', 'Columbia', 'Princeton']
@@ -26,6 +27,7 @@ def parse_set(aset):
 ycount = 0
 ytotal = 0
 
+
 def parse_result(result, ivy_results):
     global ycount
     global ytotal
@@ -36,19 +38,20 @@ def parse_result(result, ivy_results):
     team1, score1, team2, score2 = m.groups()[:4]
     score1, score2 = int(score1), int(score2)
     sets = map(parse_set, m.groups()[4:])
-    # sets
-    set_count = score1 + score2  # note that score1 is always 3
-    # difference in points in first set
-    point_diff = sets[0][0] - sets[0][1]
-    if team1 in IVY and team2 in IVY:
-        ivy_results.append((team1, point_diff, 'win', result))
-        ivy_results.append((team2, point_diff, 'loss', result))
-        if team1 == 'Yale' and point_diff > 0 or team2 == 'Yale' and point_diff < 0:
-            ycount += 1
-            ytotal += 1
-        elif team1 == 'Yale' or team2 == 'Yale':
-            ytotal += 1
-    return point_diff, set_count
+    return team1, team2, score1, score2, sets
+    # # sets
+    # set_count = score1 + score2  # note that score1 is always 3
+    # # difference in points in first set
+    # point_diff = sets[0][0] - sets[0][1]
+    # if team1 in IVY and team2 in IVY:
+    #     ivy_results.append((team1, point_diff, 'win', result))
+    #     ivy_results.append((team2, point_diff, 'loss', result))
+    #     if team1 == 'Yale' and point_diff > 0 or team2 == 'Yale' and point_diff < 0:
+    #         ycount += 1
+    #         ytotal += 1
+    #     elif team1 == 'Yale' or team2 == 'Yale':
+    #         ytotal += 1
+    # return point_diff, set_count
 
 
 def make_plot(keys, **kwargs):
@@ -83,102 +86,140 @@ def make_plot(keys, **kwargs):
     xs = np.array(xs).reshape(-1, 1)
     wps = np.array(wps)
     regress.fit(xs, wps, sizes)
+    with open('raw_scatter.csv', 'w') as outfile:
+        writer = csv.DictWriter(outfile, fieldnames=["Point Differential", "Win Percentage",
+                            "Number of Games"])
+        writer.writeheader()
+        for x, wp, size in zip(xs, wps, sizes):
+            writer.writerow(
+                {
+                    'Point Differential': int(x),
+                    'Win Percentage': wp,
+                    'Number of Games': size
+                }
+            )
     print(regress.score(xs, wps, sizes))
+    print(regress.coef_, regress.intercept_)
     plt.plot(xs, regress.predict(xs))
     return regress
 
 if __name__ == '__main__':
-    # data = {3: [], 4: [], 5: []}
-    # ivy_results = []
-    # for year in range(2012, 2017):
-    #     url = make_url(year)
-    #     table = read_html(url)[0]
+    #data = {3: [], 4: [], 5: []}
+    #ivy_results = []
+    rows = []
+    header = ['Year', 'Date', 'Location', 'Team 1', 'Team 2', 'Score 1',
+              'Score 2', 'Set 1', 'Set 2', 'Set 3', 'Set 4', 'Set 5']
+    for year in range(2012, 2017):
+        url = make_url(year)
+        table = read_html(url)[0]
+        dates = table[0].values.tolist()[1:]
+        locations = table[1].values.tolist()[1:]
+        results = table[2].values.tolist()[1:]
+        for date, location, result in zip(dates, locations, results):
+            team1, team2, score1, score2, sets = \
+                parse_result(result, [])
+            row = [year, date, location, team1, team2, score1, score2] + sets
+            rows.append(row)
+
+    with open('volleyball.csv', 'w') as outfile:
+        writer = csv.DictWriter(outfile, fieldnames=header)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(dict(zip(header, row)))
+
     #     results = table[2].values.tolist()[1:]
     #
     #     for result in results:
-    #         pd, sc = parse_result(result, ivy_results)
+    #         pd, sc =
     #         data[sc].append(pd)
     #
     # with open('output.csv', 'w') as outfile:
     #     outfile.write(json.dumps({'data': data, 'ivy': ivy_results}))
 
-    with open('output.csv') as infile:
-        deserialized = json.loads(infile.read())
-        data = deserialized['data']
-        ivy = deserialized['ivy']
-
-    # Percent of wins after winning first sets
-    count = 0
-    total = 0
-    for key in data.keys():
-        for result in data[key]:
-            if result > 0:
-                count += 1
-            total += 1
-    print count, total, count / float(total)
-
-    accumulated_win_prob = {}
-    counts = {}
-    regress = make_plot(data.keys())
-    for result in ivy:
-        team, diff, end, full = result
-        if end == 'win':
-            if diff > 0:
-                added_prob = 1 - regress.predict([[diff]])
-            else:
-                added_prob = regress.predict([[abs(diff)]])
-        elif end == 'loss':
-            if diff > 0:
-                added_prob = regress.predict([[diff]]) - 1
-            else:
-                added_prob = -regress.predict([[abs(diff)]])
-        if team in accumulated_win_prob:
-            accumulated_win_prob[team] += added_prob
-            counts[team] += 1
-            if added_prob > 0.85:
-                print(full, added_prob)
-        else:
-            accumulated_win_prob[team] = added_prob
-            counts[team] = 1
-
-    averages = {}
-    for team in accumulated_win_prob:
-        averages[team] = float(accumulated_win_prob[team] / counts[team])
-
-    sorted_values = sorted(averages.values())
-    sorted_keys = sorted(averages.keys(), key=lambda x: averages[x])
-
-    plt.figure()
-    ind = np.arange(8)
-    plt.bar(ind, sorted_values, width=1.0, color=(
-        '#b31b1b', '#00693e', '#59260B', '#9bddff', '#004785', '#ff8f00',
-        '#A41034', '#0f4d92'
-
-    ))
-    plt.xticks(ind + 1/2., sorted_keys)
-    plt.title("Performance Relative to Expectation by Team")
-    plt.xlabel("")
-    plt.ylabel("Average Win Probability Added")
-
-    plt.show()
-
-
+    # with open('output.csv') as infile:
+    #     deserialized = json.loads(infile.read())
+    #     data = deserialized['data']
+    #     ivy = deserialized['ivy']
     #
-    # # Histogram of results 1
-    # bins = OrderedDict([('Win in 3', 0), ('Win in 4', 0), ('Win in 5', 0),
-    #                     ('Lost in 5', 0), ('Lost in 4', 0)])
-    #
+    # # Percent of wins after winning first sets
+    # count = 0
+    # total = 0
     # for key in data.keys():
     #     for result in data[key]:
     #         if result > 0:
-    #             binkey = 'Win in ' + key
+    #             count += 1
+    #         total += 1
+    # print count, total, count / float(total)
+    #
+    # accumulated_win_prob = {}
+    # counts = {}
+    # regress = make_plot(data.keys())
+    # for result in ivy:
+    #     team, diff, end, full = result
+    #     if end == 'win':
+    #         if diff > 0:
+    #             added_prob = 1 - regress.predict([[diff]])
     #         else:
-    #             binkey = 'Lost in ' + key
-    #         bins[binkey] += 1
+    #             added_prob = regress.predict([[abs(diff)]])
+    #     elif end == 'loss':
+    #         if diff > 0:
+    #             added_prob = regress.predict([[diff]]) - 1
+    #         else:
+    #             added_prob = -regress.predict([[abs(diff)]])
+    #     if team in accumulated_win_prob:
+    #         accumulated_win_prob[team] += added_prob
+    #         counts[team] += 1
+    #         if added_prob > 0.85:
+    #             print(full, added_prob)
+    #     else:
+    #         accumulated_win_prob[team] = added_prob
+    #         counts[team] = 1
+    #
+    # averages = {}
+    # for team in accumulated_win_prob:
+    #     averages[team] = float(accumulated_win_prob[team] / counts[team])
+    #
+    # sorted_values = sorted(averages.values())
+    # sorted_keys = sorted(averages.keys(), key=lambda x: averages[x])
+    #
+    # with open('raw_histogram.csv', 'w') as outfile:
+    #     writer = csv.DictWriter(outfile, fieldnames=["Team Name", "Average Deviation"])
+    #     writer.writeheader()
+    #     for team in averages:
+    #         row = {"Team Name": team, "Average Deviation": averages[team]}
+    #         writer.writerow(row)
+    #
+    # plt.figure()
+    # ind = np.arange(8)
+    # plt.bar(ind, sorted_values, width=1.0, color=(
+    #     '#b31b1b', '#00693e', '#59260B', '#9bddff', '#004785', '#ff8f00',
+    #     '#A41034', '#0f4d92'
+    #
+    # ))
+    # plt.xticks(ind + 1/2., sorted_keys)
+    # plt.title("Performance Relative to Expectation by Team")
+    # plt.xlabel("")
+    # plt.ylabel("Average Win Probability Added")
+    #
+    # plt.show()
     #
     #
-
-    print(ycount, ytotal)
+    # #
+    # # # Histogram of results 1
+    # # bins = OrderedDict([('Win in 3', 0), ('Win in 4', 0), ('Win in 5', 0),
+    # #                     ('Lost in 5', 0), ('Lost in 4', 0)])
+    # #
+    # # for key in data.keys():
+    # #     for result in data[key]:
+    # #         if result > 0:
+    # #             binkey = 'Win in ' + key
+    # #         else:
+    # #             binkey = 'Lost in ' + key
+    # #         bins[binkey] += 1
+    # #
+    # #
+    #
+    # print(ycount, ytotal)
 
     # Histograms of results 2
     # plt.hist(data['3'], 10, normed=1, alpha=0.5)
