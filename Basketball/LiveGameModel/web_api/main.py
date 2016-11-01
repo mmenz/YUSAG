@@ -150,7 +150,6 @@ def list_games_today():
             game['line'] = line
 
         games_today = game_ids
-        # html += format_game(game_desc, game_id)
 
     return ujson.dumps(games_today)
 

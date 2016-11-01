@@ -103,7 +103,7 @@
             .type("line")       // visualization type
             .text("desc")       // key to use for display text
             .y("Win Percentage")         // key to use for y-axis
-            .y({"range": [0, 1]})
+            .y({"range": [0, 1], "label": "Home Team Win Percentage"})
             .x("time")          // key to use for x-axis
             .x({"grid": false, "range": [0, 2880]})
             .title(descriptions[data["gameid"]])
