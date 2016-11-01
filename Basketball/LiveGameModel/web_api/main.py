@@ -5,7 +5,7 @@ import re
 import requests
 from urlparse import parse_qs
 import os
-import json
+import ujson
 import time
 from string import lower
 from flask import (
@@ -25,6 +25,9 @@ CORS(app)
 games_today = None
 last_updated = 0
 PAUSE = 10000  # 10000 seconds ~ 3 hours
+
+cached_games = {}
+GAMES_PAUSE = 30  # 30 seconds
 
 with open('no_possession_model.mdl') as serialized:
     model = pickle.loads(serialized.read())
@@ -69,13 +72,18 @@ def send_js(path):
 
 @app.route("/<string:game_id>")
 def display_game(game_id):
+    if game_id in cached_games:
+        if cached_games[game_id]["last_updated"] - time.time() < PAUSE:
+            return cached_games[game_id]["json"]
     line = 0
     for game in games_today:
         if game['gameid'] == game_id:
             line = game['line']
             break
     data = make_data_for_game_id(game_id, line)
-    return json.dumps({"data": data, "gameid": game_id})
+    string = ujson.dumps({"data": data, "gameid": game_id})
+    cached_games[game_id] = {"last_updated": time.time(), "json": string}
+    return string
 
 
 def parse_odds(odds_text):
@@ -144,7 +152,7 @@ def list_games_today():
         games_today = game_ids
         # html += format_game(game_desc, game_id)
 
-    return json.dumps(games_today)
+    return ujson.dumps(games_today)
 
 
 if __name__ == "__main__":
