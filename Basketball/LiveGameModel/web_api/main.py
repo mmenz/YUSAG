@@ -13,7 +13,8 @@ from flask import (
     send_from_directory,
     make_response,
     request,
-    current_app)
+    current_app
+)
 from retrieve_game import make_data_for_game_id
 from functools import update_wrapper
 from flask_cors import CORS, cross_origin
