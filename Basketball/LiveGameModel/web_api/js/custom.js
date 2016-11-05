@@ -5,16 +5,19 @@ function SetUpTabbar() {
 
         descriptions[game_id] = game_ids[i]["desc"];
         states[game_id] = game_ids[i]["state"];
-        if (i == 0) {
-          d3.select("#default")
-            .html(game_ids[i]["desc"])
+        var li = d3.select("#tabbar")
+                    .append("li")
+                      .attr("role", "presentation")
+                      .attr("game_id", game_id)
+                      .on("click", function(){
+                        d3.select(".active").attr("class", "");
+                        d3.select(this).attr("class", "active");
+                        DisplayGame(d3.select(this).attr("game_id"))
+                      });
+        li.append("a").html(game_ids[i]["desc"]);
+        if (i == 0){
+          li.attr("class", "active");
           DisplayGame(game_id);
-        } else {
-          d3.select("#tabbar")
-            .append("li")
-              .attr("role", "presentation")
-              .append("a")
-                .html(game_ids[i]["desc"])
         }
     }
   });
