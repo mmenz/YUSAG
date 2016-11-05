@@ -40,6 +40,7 @@ function DisplayGame(game_id){
       d3.select("#viz")
         .append("p")
           .text("Game hasn't started yet.");
+      document.getElementById("loader").style.display = "none";
       return;
     }
 
