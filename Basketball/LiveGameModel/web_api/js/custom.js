@@ -35,6 +35,8 @@ Number.prototype.toQMMSS = function () {
 function DisplayGame(game_id){
 
     d3.select("#viz").remove("*");
+    d3.select("body").append("div")
+      .attr("id", "viz");
 
     if (states[game_id] == "before") {
       d3.select("#viz")
