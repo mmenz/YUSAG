@@ -35,6 +35,11 @@ with open('no_possession_model.mdl') as serialized:
     model = pickle.loads(serialized.read())
 
 
+@app.route('/')
+def main():
+    return open('plot.html').read()
+
+
 @app.route('/js/<path:path>')
 def send_js(path):
     return send_from_directory('js', path)

@@ -1,5 +1,5 @@
 function SetUpTabbar() {
-  d3.json("https://nbamodel.herokuapp.com/games", function(game_ids) {
+  d3.json("/games", function(game_ids) {
       for (var i = 0; i < game_ids.length; i++) {
         var game_id = game_ids[i]["gameid"];
 
@@ -10,7 +10,7 @@ function SetUpTabbar() {
                       .attr("role", "presentation")
                       .attr("game_id", game_id)
                       .on("click", function(){
-                        d3.select(".active").attr("class", "");
+                        d3.select("li.active").attr("class", "");
                         d3.select(this).attr("class", "active");
                         DisplayGame(d3.select(this).attr("game_id"))
                       });
@@ -49,7 +49,7 @@ function DisplayGame(game_id){
       return;
     }
 
-    d3.json("https://nbamodel.herokuapp.com/" + game_id, function(data) {
+    d3.json("/" + game_id, function(data) {
       // instantiate d3plus
       var game_data = data["data"];
       var mirrored_data = [];
