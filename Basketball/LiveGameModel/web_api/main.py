@@ -1,6 +1,6 @@
 import sys
 from sklearn import neural_network
-import pickle
+import cPickle
 import re
 import requests
 from urlparse import parse_qs
@@ -32,7 +32,7 @@ cached_games = {}
 GAMES_PAUSE = 30  # 30 seconds
 
 with open('no_possession_model.mdl') as serialized:
-    model = pickle.loads(serialized.read())
+    model = cPickle.load(serialized)
 
 
 @app.route('/')
