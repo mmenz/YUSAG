@@ -45,87 +45,26 @@
 }
 </style>
 
+<!-- Latest compiled and minified CSS and JS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<!-- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script> -->
 <script src="https://d3plus.org/js/d3.min.js"></script>
 <script src="https://d3plus.org/js/d3plus.min.js"></script>
+<script src="https://nbamodel.herokuapp.com/js/custom.js"></script>
 
 <!-- create container element for visualization -->
+
+<ul class="nav nav-tabs" id="tabbar">
+  <li role="presentation" class="active"><a id="default" href="#">Loading ...</a></li>
+</ul>
+
 <div id="loader"></div>
-<div id="container"></div>
+<div id="viz"></div>
 
 <script>
 
-  Number.prototype.toQMMSS = function () {
-      var sec_num = parseInt(this, 10); // don't forget the second param
-      var quarter   = Math.floor(sec_num / 720);
-      var minutes = Math.floor((sec_num - (quarter * 720)) / 60);
-      var seconds = sec_num - (quarter * 720) - (minutes * 60);
-
-      quarter = quarter + 1;
-      if (minutes < 10) {minutes = "0"+minutes;}
-      if (seconds < 10) {seconds = "0"+seconds;}
-      return 'Q'+quarter+' '+minutes+':'+seconds;
-  }
-
     var descriptions = {};
-
-    d3.json("https://nbamodel.herokuapp.com/games", function(game_ids) {
-      for (var i = 0; i < game_ids.length; i++) {
-        var game_id = game_ids[i]["gameid"];
-
-        descriptions[game_id] = game_ids[i]["desc"];
-
-        d3.select("#container")
-          .append("div")
-            .attr("id", "viz" + game_id)
-            .attr("class", "plot");
-
-        d3.json("https://nbamodel.herokuapp.com/" + game_id, function(data) {
-          // instantiate d3plus
-          var game_data = data["data"];
-          var mirrored_data = [];
-          // for (var i = 0; i < game_data.length; i++) {
-          //   mirrored_data.push(game_data[i]);
-          //   var copy = {};
-          //   for (var key in game_data[i]) {
-          //       copy[key] = game_data[i][key];
-          //   }
-          //   copy["id"] = "mirror";
-          //   copy["Win Percentage"] = 1 - copy["Win Percentage"];
-          //   mirrored_data.push(copy);
-          // }
-          //
-          // console.log(mirrored_data);
-
-          visualization = d3plus.viz()
-            .container("#viz" + data["gameid"])
-            .data(game_data)  // data to use with the visualization
-            .id("id")
-            .type("line")       // visualization type
-            .text("desc")       // key to use for display text
-            .y("Win Percentage")         // key to use for y-axis
-            .y({"range": [0, 1], "label": "Home Team Win Percentage"})
-            .x("time")          // key to use for x-axis
-            .x({"grid": false, "range": [0, 2880]})
-            .title(descriptions[data["gameid"]])
-            .format({
-              "number": function (number, params) {
-                if (params.key == 'time')
-                  return number.toQMMSS();
-                else
-                  return (100 * number).toFixed(1) + "%";
-              }
-            })
-            .draw()             // finally, draw the visualization!
-            document.getElementById("loader").style.display = "none";
-        })
-      }
-
-      if (game_ids.length == 0) {
-        d3.select("#container")
-          .append("p")
-            .text("No Games Today!")
-      }
-    });
-
+    var states = {};
+    SetUpTabbar();
 
 </script>
