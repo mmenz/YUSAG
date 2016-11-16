@@ -48,7 +48,7 @@ def send_js(path):
 @app.route("/<string:game_id>")
 def display_game(game_id):
     if game_id in cached_games:
-        if time.time() - cached_games[game_id]["last_updated"] < PAUSE:
+        if time.time() - cached_games[game_id]["last_updated"] < GAMES_PAUSE:
             return cached_games[game_id]["json"]
     line = 0
     for game in games_today:
