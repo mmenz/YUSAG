@@ -91,7 +91,7 @@ def link_matches_game_desc(game_desc, link):
 def list_games_today():
     global games_today, last_updated
     html = ''
-    if time.time() > last_updated + PAUSE:
+    if time.time() > last_updated + GAMES_PAUSE:
         r = requests.get('http://www.espn.com/nba/bottomline/scores')
         odds = requests.get('http://www.oddsshark.com/nba/odds')
         qs = parse_qs(r.text)
