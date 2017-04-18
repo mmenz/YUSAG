@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<!-- Latest compiled and minified CSS and JS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<style>
+
+text {
+  font: 10px sans-serif;
+  text-anchor: middle;
+}
+
+svg {
+  background: "gray";
+}
+
+</style>
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="myModalLabel">Welcome!</h4>
+      </div>
+      <div class="modal-body">
+        Inputting Shots From:
+        <select id="inputtype">
+          <option value="0"> Game </option>
+          <option value="1"> Practice </option>
+          <option value="2"> Scrimmage </option>
+          <option value="3"> Testing </option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <div style="float:left;"><a href="/documentation">What is this?</a></div>
+        <button type="button" class="btn btn-primary" data-dismiss="modal">Start</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<table> <tbody>
+  <tr>
+    <td><svg width="800" height="613"></svg></td>
+    <td><div style="height:613px;overflow:auto;width:300px;">
+      <table class="table table-striped" style="width:100%;">
+      <tbody id="record">
+        <tr>
+          <td>Date:</td>
+          <td colspan=2 id="today"></td>
+          <td colspan=2><a href="download" >Download</a></td>
+        </tr>
+        <tr id="head">
+          <th>ID</th>
+          <th>Player</th>
+          <th>Outcome</th>
+          <th>x</th>
+          <th>y</th>
+        </tr>
+      </tbody>
+    </table>
+    </div></td>
+  </tr>
+  <tr>
+    <td><center> <p id="escape" hidden=true>Press "ESC" to Cancel</p> </center></td>
+    <td></td>
+  </tr>
+</tbody> </table>
+
+
+
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+var utc = new Date().toJSON().slice(0,10);
+document.getElementById("today").innerHTML = utc;
+
+var players = [
+  "Anthony Dallier",
+  "Eric Monroe",
+  "Alex Copeland",
+  "Eric Anderson",
+  "Makai Mason",
+  "Trey Phills",
+  "Matt Greene",
+  "Austin Williams",
+  "Jordan Bruner",
+  "Miye Oni",
+  "AJ Edwards",
+  "Landon Russell",
+  "Blake Reynolds",
+  "Thomas Ryan",
+  "Sam Downey"
+];
+
+var shot_type = 0;
+var shots_data = [
+
+];
+
+var colors = [
+  "black",
+  "blue",
+]
+
+var svg = d3.select("svg"),
+    width = +svg.attr("width");
+
+var count = 0;
+
+svg.append("svg:image")
+  .attr('x', 66)
+  .attr('y', 0)
+  .attr('width', 667)
+  .attr('height', 613)
+  .attr('xlink:href', 'images/cropped.jpg')
+
+var format = d3.format(",d");
+
+var color = d3.scaleOrdinal(d3.schemeCategory20c);
+
+var placing_shot = false;
+
+d3.select("body").on("keydown", function(){
+  // If the user presses the escape key, cancel the current shot
+  if (d3.event.keyCode == 27 && placing_shot) {
+    placing_shot = false;
+    d3.selectAll(".players").remove();
+    d3.selectAll(".outcome").remove();
+    document.getElementById("escape").hidden = true;
+  }
+})
+
+svg.on("click", function(){
+  if (placing_shot) {
+    return
+  }
+  placing_shot = true;
+  document.getElementById("escape").hidden = false;
+  var coords = d3.mouse(this);
+
+  var x = parseInt(coords[0]);
+  var y = parseInt(coords[1]);
+
+  var radius = 30;
+
+  // make circle
+  svg.append("circle")
+    .attr("class", "outcome make")
+    .attr("transform", "translate(" + coords[0] + "," + coords[1] + ")")
+    .attr("r", radius)
+    .attr("fill", "green")
+    .on("click", function(){
+      select_player("make", x, y);
+    })
+
+  svg.append("text")
+    .attr("class", "outcome make text")
+    .attr("transform", "translate(" + coords[0] + "," + coords[1] + ")")
+    .attr("dy", radius / 6)
+    .text("MAKE")
+    .on("click", function(){
+      select_player("make", x, y);
+    })
+
+  // miss circle
+  svg.append("circle")
+    .attr("class", "outcome miss")
+    .attr("transform", "translate(" + coords[0] + "," + coords[1] + ")")
+    .attr("r", radius)
+    .attr("fill", "red")
+    .on("click", function(){
+      select_player("miss", x, y);
+    })
+
+  svg.append("text")
+    .attr("class", "outcome miss text")
+    .attr("transform", "translate(" + coords[0] + "," + coords[1] + ")")
+    .attr("dy", radius / 6)
+    .text("MISS")
+    .on("click", function(){
+      select_player("miss", x, y);
+    })
+
+  d3.selectAll(".make").transition()
+    .duration(50)
+    .attr("transform", "translate(" + (x - radius - 5) + "," + coords[1] + ")")
+
+  d3.selectAll(".miss").transition()
+    .duration(50)
+    .attr("transform", "translate(" + (x + radius + 5) + "," + coords[1] + ")")
+
+})
+
+function select_player(outcome, x, y) {
+  d3.selectAll(".outcome")
+    .transition()
+    .duration(200)
+    .style("opacity", 0.0)
+    .remove()
+
+  var single_height = 30;
+  var names_height = players.length * single_height;
+  var names_width = 150;
+  var names_top = y - names_height / 2;
+  var names_left = x - names_width / 2;
+  if (names_top < 0) {
+    names_top = 0;
+  } else if (names_top + names_height > 613) {
+    names_top = 613 - names_height;
+  }
+  for (var i = 0; i < players.length; i++) {
+    var back = svg.append("rect")
+      .attr("class", "players backing")
+      .attr("name", players[i])
+      .attr("x", names_left)
+      .attr("y", y)
+      .attr("width", names_width)
+      .attr("height", single_height)
+      .attr("fill", colors[i % colors.length])
+      .on("click", function() {
+        selected_player(d3.select(this).attr("name"), outcome, x, y)
+      })
+    var text = svg.append("text")
+      .attr("class", "players text")
+      .attr("name", players[i])
+      .attr("x", x)
+      .attr("y", y)
+      .style("font-size", "10pt")
+      .style("fill", "white")
+      .on("click", function() {
+        selected_player(d3.select(this).attr("name"), outcome, x, y)
+      })
+      .text(players[i]);
+    back.transition()
+      .duration(100)
+      .attr("y", names_top + i * single_height)
+    text.transition()
+      .duration(100)
+      .attr("y", names_top + i * single_height + single_height / 2)
+  }
+}
+
+function selected_player(player, outcome, x, y) {
+  document.getElementById("escape").hidden = true;
+  d3.selectAll(".players")
+    .transition()
+    .duration(100)
+    .style("opacity", 0.0)
+    .remove()
+    .on("end", function(){
+      placing_shot = false;
+    })
+
+  post_shot(player, outcome, x, y);
+  add_shot(player, outcome, x, y);
+}
+
+
+function post_shot(player, outcome, x, y) {
+  $.post("new_shot",
+  {
+      player: player,
+      outcome: outcome,
+      x: x,
+      y: y,
+      date: utc,
+      shot_type: shot_type
+  },
+  function(data, status){
+    console.log(status);
+      if (status != "success") {
+        post_shot(player, outcome, x, y);
+      }
+  });
+}
+
+
+function add_shot(player, outcome, x, y) {
+  // save the shot on the picture
+  count += 1;
+  svg.append("circle")
+    .attr("class", "saved circle")
+    .attr("r", 10)
+    .attr("fill", function(){ if (outcome == "make") return "green"; return "red";})
+    .attr("transform", "translate(" + x + "," + y + ")")
+  svg.append("text")
+    .attr("class", "saved text")
+    .text(count)
+    .attr("dy", 2)
+    .attr("transform", "translate(" + x + "," + y + ")")
+
+  // add the shot to the record
+  var row = d3.select("#record")
+    .insert("tr", "#head + *")
+
+  row.append("td")
+    .html(count)
+  row.append("td")
+    //.attr("contenteditable", true)
+    .html(player);
+  row.append("td")
+    //.attr("contenteditable", true)
+    .html(outcome);
+  row.append("td")
+    .html(convertX(x));
+  row.append("td")
+    .html(convertY(y));
+
+  shots_data.push([utc, count, player, outcome, convertX(x), convertY(y)])
+}
+
+
+function convertX(x) {
+  return parseInt((x - 400) * 10 * 50 / 667);
+}
+
+function convertY(y) {
+  return parseInt((561 - y) * 10 * 47 / 613);
+}
+
+$('#myModal').modal('show');
+$('#myModal').on('hide.bs.modal', function (e) {
+  shot_type = document.getElementById("inputtype").value;
+})
+
+// get the shots that have already been taken
+$.post("get_shots",
+{
+    date: utc
+},
+function(data, status){
+  data = JSON.parse(data);
+  for (var i=0; i < data.length; i++) {
+    add_shot(data[i][1], data[i][2], data[i][3], data[i][4]);
+  }
+});
+
+</script>

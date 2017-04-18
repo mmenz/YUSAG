@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+<!-- Latest compiled and minified CSS and JS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+<body>
+  <div class="starter-template" style="margin:50px;">
+    <h1>Shot Recording Tool</h1>
+    <h2> Recording a shot </h2>
+    <p class="lead">
+      To record a shot, click on the court at the location where <br>
+      the shot was taken from. Then select make or miss and <br>
+      finally the player who took the shot.
+    </p>
+    <h2> Using the data </h2>
+    <p class="lead">
+      Click on download to download all the shots recorded by <br>
+      the tool. The columns are as follows:
+    </p>
+    <ul>
+      <li>id: a unique identifer for the shot</li>
+      <li>player: the name of the shot-taker</li>
+      <li>outcome: the result of the shot</li>
+      <li>x: the x-coordinate in pixels</li>
+      <li>y: the y-coordinate in pixels</li>
+      <li>date: the date the shot was recorded</li>
+      <li>type: the type of the shot (0=Game, 1=Practice, 2=Scrimmage, 3=Testing)</li>
+    </ul>
+    <h2> Converting shot coordinates </h2>
+    <p class="lead">
+    To convert the x-coordinate to feet so that the hoop is at (0,0) use: <br>
+      f(x) = (x - 400) / (667 / 50) <br>
+    To convert the y-coordinate to feet so that the hoop is at (0,0) use: <br>
+      g(y) = (561 - y) / (613 / 47) <br>
+    </p>
+  </div>
+
+</body>

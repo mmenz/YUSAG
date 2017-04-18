@@ -52,24 +52,26 @@ with open('tennis_archive_matches_ATP.csv', 'rU') as infile:
 
 # Build neural network
 net = tflearn.input_data(shape=[None, PAD_LENGTH])
-net = tflearn.fully_connected(net, 128, activation='relu')
-net = tflearn.fully_connected(net, 128, activation='relu')
+net = tflearn.embedding(net, len(idx), 1)
+net = tflearn.lstm(net, 128, activation='relu')
 net = tflearn.fully_connected(net, 2, activation='softmax')
 net = tflearn.regression(net, optimizer='adam')
 
 # train the model
+TRAIN_SIZE = 50000
 model = tflearn.DNN(net)
-model.fit(xtrain, ytrain, n_epoch=1, batch_size=128, show_metric=True)
+model.fit(xtrain[:TRAIN_SIZE], ytrain[:TRAIN_SIZE],
+          n_epoch=1, batch_size=128, show_metric=True)
 
 # evaluate model
-# correct = 0
-# for prediction, label in zip(model.predict(xtest), ytest):
-#     if prediction[0] > prediction[1] and label == '1':
-#         correct += 1
-#     elif prediction[0] < prediction[1] and label == '2':
-#         correct += 1
-#
-# print(float(correct) / len(ytest))
+correct = 0
+for prediction, label in zip(model.predict(xtest), ytest):
+    if prediction[0] > prediction[1] and label == '1':
+        correct += 1
+    elif prediction[0] < prediction[1] and label == '2':
+        correct += 1
+
+print(float(correct) / len(ytest))
 
 # look at a match
 import matplotlib.pyplot as plt

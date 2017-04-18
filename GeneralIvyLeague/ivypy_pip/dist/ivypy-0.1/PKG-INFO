@@ -1,0 +1,45 @@
+Metadata-Version: 1.1
+Name: ivypy
+Version: 0.1
+Summary: A package for retrieving ivy league sports data
+Home-page: UNKNOWN
+Author: Michael Menz
+Author-email: menzdogma@gmail.com
+License: BSD
+Description: 
+        ivypy Documentation
+        ***************************************************
+        
+        Introduction
+        ============
+        
+        ivypy is a package to retrieve ivy league sports statistics via
+        scraping. It provides a few method for doing so.
+        
+        retrieve
+        ========
+        retrieve is a method which allows a user to get dat as a list of
+        dictionaries. retrieve has the following call pattern:
+        
+        retrieve(sport, endpoint, gender="m", year="current")
+        
+        where sport is the relevant sport, endpoint is the data you want, gender
+        is the gender for the sport and year is either "current" for the current
+        year or an integer for a previous year. For example to get the standings
+        for men's basketball in 2013:
+        
+        >>> standings = retrieve("basketball", "standings", year=2013)
+        >>> for row in standings: print(row)
+        {'overall': u'27-5', 'ivy': u'13-1', 'team': 'Harvard'}
+        {'overall': u'19-14', 'ivy': u'9-5', 'team': 'Yale'}
+        {'overall': u'21-9', 'ivy': u'8-6', 'team': 'Princeton'}
+        {'overall': u'21-13', 'ivy': u'8-6', 'team': 'Columbia'}
+        {'overall': u'15-14', 'ivy': u'7-7', 'team': 'Brown'}
+        {'overall': u'12-16', 'ivy': u'5-9', 'team': 'Dartmouth'}
+        {'overall': u'8-20', 'ivy': u'5-9', 'team': 'Penn'}
+        {'overall': u'2-26', 'ivy': u'1-13', 'team': 'Cornell'}
+        
+Keywords: ivy league sports
+Platform: UNKNOWN
+Classifier: Topic :: Utilities
+Classifier: License :: OSI Approved :: BSD License
