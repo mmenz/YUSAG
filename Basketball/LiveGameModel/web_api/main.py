@@ -15,7 +15,7 @@ from flask import (
     request,
     current_app
 )
-from retrieve_game import make_data_for_game_id
+from retrieve_game import make_data_for_game_id, lookup_line_for_history
 from functools import update_wrapper
 from flask_cors import CORS, cross_origin
 from helpers import infer_state
@@ -51,13 +51,31 @@ def display_game(game_id):
         if time.time() - cached_games[game_id]["last_updated"] < GAMES_PAUSE:
             return cached_games[game_id]["json"]
     line = 0
+    desc = ''
     for game in games_today:
         if game['gameid'] == game_id:
             line = game['line']
+            desc = game['desc']
             break
-    data = make_data_for_game_id(game_id, line)
+    data, ot = make_data_for_game_id(game_id, line, '^' in desc)
     string = ujson.dumps({"data": data, "gameid": game_id})
     cached_games[game_id] = {"last_updated": time.time(), "json": string}
+    return string
+
+
+@app.route("/history/<string:game_id>")
+def history(game_id):
+    history_string = open('history.html').read()
+    history_string = history_string.replace("#####", game_id)
+    return history_string
+
+
+@app.route("/history_helper/<string:game_id>")
+def historical_data(game_id):
+    line, description = lookup_line_for_history(game_id)
+    data, ot = make_data_for_game_id(game_id, line, True)
+    string = ujson.dumps({"data": data, "gameid": game_id,
+                          "description": description, "xmax": 3180 if ot else 2880})
     return string
 
 

@@ -63,7 +63,7 @@ function DisplayGame(game_id){
         .y("Win Percentage")         // key to use for y-axis
         .y({"range": [0, 1], "label": "Home Team Win Percentage"})
         .x("time")          // key to use for x-axis
-        .x({"grid": false, "range": [0, 2880]})
+        .x({"grid": false, "range": [0, 3200]})
         .title(descriptions[data["gameid"]])
         .format({
           "number": function (number, params) {
