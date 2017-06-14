@@ -9,13 +9,13 @@ import re
 SEARCH_URL = "http://www.nfl.com/players/search"
 PLAYER_URL = "http://www.nfl.com/player/{name}/{pid}/draft"
 CSV_FILE = "2014-NFL-Census-Shared.csv"
-OUT_FILE = "2014-NFL-Census-Shared-With-Profile.csv"
+OUT_FILE = "2014-NFL-Census-Shared-With-Profile-Old.csv"
 
 
 def scrape_with_name(name):
     params = {
         "category": "name",
-        "playerType": "current",
+        "playerType": "historical",
         "filter": name,
     }
 
