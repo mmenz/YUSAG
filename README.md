@@ -5,4 +5,4 @@ See our [projects page](http://sports.sites.yale.edu) to see this code put to us
 
 Follow [us on twitter](https://twitter.com/YaleSportsGroup) for updates.
 
-![logo](https://pbs.twimg.com/profile_images/836007438948106241/CeoSio4B.jpg)
+![logo](http://sports.sites.yale.edu/sites/default/files/styles/adaptive/public/banner.png?itok=7QjZB_6d)
